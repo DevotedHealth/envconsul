@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"time"
 
@@ -107,7 +106,7 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	// Return an error if no command was given
-	if !config.StringPresent(cfg.Exec.Command) {
+	if !config.StringPresent(cfg.Exec.Command) && cfg.LiteralCommand == nil {
 		return logError(ErrMissingCommand, ExitCodeConfigError)
 	}
 
@@ -617,9 +616,9 @@ func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, bool, error)
 	// Convert any arguments given after to the command, but a command specified
 	// via the flag takes precedence.
 	if c.Exec.Command == nil {
-		if command := strings.Join(flags.Args(), " "); command != "" {
+		if len(flags.Args()) > 0 {
 			c.Exec.Enabled = config.Bool(true)
-			c.Exec.Command = config.String(command)
+			c.LiteralCommand = flags.Args()[:]
 		}
 	}
 

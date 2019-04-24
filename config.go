@@ -41,6 +41,9 @@ type Config struct {
 	// Exec is the configuration for exec/supervise mode.
 	Exec *config.ExecConfig `mapstructure:"exec"`
 
+	// Literal command to execute, without shell parsing.
+	LiteralCommand []string `mapstructure:"literal_command"`
+
 	// KillSignal is the signal to listen for a graceful terminate event.
 	KillSignal *os.Signal `mapstructure:"kill_signal"`
 
@@ -98,6 +101,8 @@ func (c *Config) Copy() *Config {
 	if c.Exec != nil {
 		o.Exec = c.Exec.Copy()
 	}
+
+	o.LiteralCommand = c.LiteralCommand
 
 	o.KillSignal = c.KillSignal
 
@@ -158,6 +163,10 @@ func (c *Config) Merge(o *Config) *Config {
 
 	if o.Exec != nil {
 		r.Exec = r.Exec.Merge(o.Exec)
+	}
+
+	if o.LiteralCommand != nil {
+		r.LiteralCommand = o.LiteralCommand
 	}
 
 	if o.KillSignal != nil {
@@ -487,6 +496,7 @@ func (c *Config) GoString() string {
 	return fmt.Sprintf("&Config{"+
 		"Consul:%s, "+
 		"Exec:%s, "+
+		"LiteralCommand:%v, "+
 		"KillSignal:%s, "+
 		"LogLevel:%s, "+
 		"MaxStale:%s, "+
@@ -503,6 +513,7 @@ func (c *Config) GoString() string {
 		"}",
 		c.Consul.GoString(),
 		c.Exec.GoString(),
+		c.LiteralCommand,
 		config.SignalGoString(c.KillSignal),
 		config.StringGoString(c.LogLevel),
 		config.TimeDurationGoString(c.MaxStale),

@@ -306,12 +306,19 @@ func (r *Runner) Run() (<-chan int, error) {
 		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	p := shellwords.NewParser()
-	p.ParseEnv = true
-	p.ParseBacktick = true
-	args, err := p.Parse(config.StringVal(r.config.Exec.Command))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed parsing command")
+	var args []string
+	if r.config.LiteralCommand != nil {
+		args = r.config.LiteralCommand
+	} else {
+		p := shellwords.NewParser()
+		p.ParseEnv = true
+		p.ParseBacktick = true
+
+		var err error
+		args, err = p.Parse(config.StringVal(r.config.Exec.Command))
+		if err != nil {
+			return nil, errors.Wrap(err, "failed parsing command")
+		}
 	}
 
 	child, err := child.New(&child.NewInput{

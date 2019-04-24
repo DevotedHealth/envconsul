@@ -888,8 +888,8 @@ func TestCLI_ParseFlags(t *testing.T) {
 			&Config{
 				Exec: &config.ExecConfig{
 					Enabled: config.Bool(true),
-					Command: config.String("my command to run"),
 				},
+				LiteralCommand: []string{"my", "command", "to", "run"},
 			},
 			false,
 		},

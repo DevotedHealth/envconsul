@@ -225,6 +225,18 @@ func (r *Runner) Signal(s os.Signal) error {
 	return r.child.Signal(s)
 }
 
+var envRe = regexp.MustCompile(`\$({[a-zA-Z0-9_]+}|[a-zA-Z0-9_]+)`)
+
+func replaceEnv(envs map[string]string, s string) string {
+	return envRe.ReplaceAllStringFunc(s, func(s string) string {
+		s = s[1:]
+		if s[0] == '{' {
+			s = s[1 : len(s)-1]
+		}
+		return envs[s]
+	})
+}
+
 // Run executes and manages the child process with the correct environment. The
 // current environment is also copied into the child process environment.
 func (r *Runner) Run() (<-chan int, error) {
@@ -730,7 +742,11 @@ func (r *Runner) applyConfigEnv(env map[string]string) map[string]string {
 	custom := make(map[string]string, len(r.config.Exec.Env.Custom))
 	for _, v := range r.config.Exec.Env.Custom {
 		list := strings.SplitN(v, "=", 2)
-		custom[list[0]] = list[1]
+		if config.BoolVal(r.config.CustomEnvInterpolation) {
+			custom[list[0]] = replaceEnv(env, list[1])
+		} else {
+			custom[list[0]] = list[1]
+		}
 	}
 
 	// In pristine mode, just return the custom environment. If the user did not

@@ -44,6 +44,10 @@ type Config struct {
 	// Literal command to execute, without shell parsing.
 	LiteralCommand []string `mapstructure:"literal_command"`
 
+	// Whether to interpolate existing environment variables into custom
+	// environment variables.
+	CustomEnvInterpolation *bool `mapstructure:"custom_env_interpolation"`
+
 	// KillSignal is the signal to listen for a graceful terminate event.
 	KillSignal *os.Signal `mapstructure:"kill_signal"`
 
@@ -103,6 +107,8 @@ func (c *Config) Copy() *Config {
 	}
 
 	o.LiteralCommand = c.LiteralCommand
+
+	o.CustomEnvInterpolation = c.CustomEnvInterpolation
 
 	o.KillSignal = c.KillSignal
 
@@ -167,6 +173,10 @@ func (c *Config) Merge(o *Config) *Config {
 
 	if o.LiteralCommand != nil {
 		r.LiteralCommand = o.LiteralCommand
+	}
+
+	if o.CustomEnvInterpolation != nil {
+		r.CustomEnvInterpolation = o.CustomEnvInterpolation
 	}
 
 	if o.KillSignal != nil {
@@ -497,6 +507,7 @@ func (c *Config) GoString() string {
 		"Consul:%s, "+
 		"Exec:%s, "+
 		"LiteralCommand:%v, "+
+		"CustomEnvInterpolation:%s, "+
 		"KillSignal:%s, "+
 		"LogLevel:%s, "+
 		"MaxStale:%s, "+
@@ -514,6 +525,7 @@ func (c *Config) GoString() string {
 		c.Consul.GoString(),
 		c.Exec.GoString(),
 		c.LiteralCommand,
+		config.BoolGoString(c.CustomEnvInterpolation),
 		config.SignalGoString(c.KillSignal),
 		config.StringGoString(c.LogLevel),
 		config.TimeDurationGoString(c.MaxStale),

@@ -66,7 +66,7 @@ func NewCLI(out, err io.Writer) *CLI {
 // status from the command.
 func (cli *CLI) Run(args []string) int {
 	// Parse the flags and args
-	cfg, paths, once, isVersion, err := cli.ParseFlags(args[1:])
+	cfg, paths, isVersion, err := cli.ParseFlags(args[1:])
 	if err != nil {
 		if err == flag.ErrHelp {
 			fmt.Fprintf(cli.errStream, usage, version.Name)
@@ -111,7 +111,7 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	// Initial runner
-	runner, err := NewRunner(cfg, once)
+	runner, err := NewRunner(cfg, *cfg.Once)
 	if err != nil {
 		return logError(err, ExitCodeRunnerError)
 	}
@@ -163,7 +163,7 @@ func (cli *CLI) Run(args []string) int {
 					return logError(err, ExitCodeConfigError)
 				}
 
-				runner, err = NewRunner(cfg, once)
+				runner, err = NewRunner(cfg, *cfg.Once)
 				if err != nil {
 					return logError(err, ExitCodeRunnerError)
 				}
@@ -206,8 +206,8 @@ func (cli *CLI) stop() {
 // Flag library. This is extracted into a helper to keep the main function
 // small, but it also makes writing tests for parsing command line arguments
 // much easier and cleaner.
-func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, bool, error) {
-	var once, isVersion bool
+func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, error) {
+	var isVersion bool
 	var c = DefaultConfig()
 
 	// configPaths stores the list of configuration paths on disk
@@ -366,7 +366,10 @@ func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, bool, error)
 		return nil
 	}), "max-stale", "")
 
-	flags.BoolVar(&once, "once", false, "")
+	flags.Var((funcBoolVar)(func(b bool) error {
+		c.Once = config.Bool(b)
+		return nil
+	}), "once", "")
 
 	flags.Var((funcVar)(func(s string) error {
 		c.PidFile = config.String(s)
@@ -610,7 +613,7 @@ func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, bool, error)
 
 	// If there was a parser error, stop
 	if err := flags.Parse(args); err != nil {
-		return nil, nil, false, false, err
+		return nil, nil, false, err
 	}
 
 	// Convert any arguments given after to the command, but a command specified
@@ -622,7 +625,7 @@ func (cli *CLI) ParseFlags(args []string) (*Config, []string, bool, bool, error)
 		}
 	}
 
-	return c, configPaths, once, isVersion, nil
+	return c, configPaths, isVersion, nil
 }
 
 // loadConfigs loads the configuration from the list of paths. The optional

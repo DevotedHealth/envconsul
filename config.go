@@ -86,6 +86,9 @@ type Config struct {
 	// Upcase converts environment variables to uppercase
 	Upcase *bool `mapstructure:"upcase"`
 
+	// Upcase converts environment variables to uppercase
+	Once *bool `mapstructure:"once"`
+
 	// Vault is the configuration for connecting to a vault server.
 	Vault *config.VaultConfig `mapstructure:"vault"`
 
@@ -137,6 +140,8 @@ func (c *Config) Copy() *Config {
 	}
 
 	o.Upcase = c.Upcase
+
+	o.Once = c.Once
 
 	if c.Vault != nil {
 		o.Vault = c.Vault.Copy()
@@ -221,6 +226,10 @@ func (c *Config) Merge(o *Config) *Config {
 
 	if o.Upcase != nil {
 		r.Upcase = o.Upcase
+	}
+
+	if o.Once != nil {
+		r.Once = o.Once
 	}
 
 	if o.Vault != nil {
@@ -519,6 +528,7 @@ func (c *Config) GoString() string {
 		"Secrets:%s, "+
 		"Syslog:%s, "+
 		"Upcase:%s, "+
+		"Once:%s, "+
 		"Vault:%s, "+
 		"Wait:%s"+
 		"}",
@@ -537,6 +547,7 @@ func (c *Config) GoString() string {
 		c.Secrets.GoString(),
 		c.Syslog.GoString(),
 		config.BoolGoString(c.Upcase),
+		config.BoolGoString(c.Once),
 		c.Vault.GoString(),
 		c.Wait.GoString(),
 	)
@@ -620,6 +631,10 @@ func (c *Config) Finalize() {
 
 	if c.Upcase == nil {
 		c.Upcase = config.Bool(false)
+	}
+
+	if c.Once == nil {
+		c.Once = config.Bool(false)
 	}
 
 	if c.Vault == nil {
